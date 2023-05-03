@@ -1,5 +1,6 @@
 import logging
 import random
+import openai
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -83,6 +84,7 @@ def start_bot(**kwargs):
     # Load Config
     configs.load_plugins()
     configs.parse_args()
+    openai.api_key = configs.args.openai_api_key
     # Some plugins need config values without being passed
     # through. Because we do a weird config/argparse hybrid,
     # we need to load the configs in a weird way

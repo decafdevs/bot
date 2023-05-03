@@ -8,6 +8,7 @@ from time import sleep, time
 from typing import Optional, Tuple
 
 import emoji
+import openai
 import spintax
 from colorama import Fore, Style
 
@@ -279,6 +280,7 @@ def interact_with_user(
             if already_liked:
                 logger.info("Post already liked!")
             elif opened_post_view and already_liked is not None:
+                post_description = opened_post_view.get_post_description()
                 if media_type in (MediaType.REEL, MediaType.IGTV, MediaType.VIDEO):
                     opened_post_view.start_video()
                     video_opened = opened_post_view.open_video()
@@ -299,7 +301,7 @@ def interact_with_user(
                     logger.warning("Fail to like post. Let's continue...")
                 if comment_percentage != 0 and can_comment(
                     media_type, profile_filter, current_mode
-                ):
+                ) and post_description is not None:
                     if number_of_commented < max_comments_pro_user:
                         comment_done = _comment(
                             device,
@@ -308,6 +310,7 @@ def interact_with_user(
                             args,
                             session_state,
                             media_type,
+                            post_description,
                         )
                         if comment_done:
                             number_of_commented += 1
@@ -593,6 +596,7 @@ def _comment(
     args,
     session_state: SessionState,
     media_type: MediaType,
+    post_description: str,
 ) -> bool:
     if not session_state.check_limit(
         limit_type=session_state.Limit.COMMENTS, output=False
@@ -627,7 +631,12 @@ def _comment(
                     enabled="true",
                 )
                 if comment_box.exists():
-                    comment = load_random_comment(my_username, media_type)
+                    logger.error(args.can_ai_comment)
+                    comment = None
+                    if args.can_ai_comment:
+                        comment = load_ai_comment(post_description)
+                    else:
+                        comment = load_random_comment(my_username, media_type)
                     if comment is None:
                         UniversalActions.close_keyboard(device)
                         device.back()
@@ -652,7 +661,7 @@ def _comment(
                 universal_actions.detect_block(device)
                 universal_actions.close_keyboard(device)
                 posted_text = device.find(
-                    text=f"{my_username} {comment}",
+                    text=f"{comment}",
                 )
                 when_posted = posted_text.sibling(
                     resourceId=ResourceID.ROW_COMMENT_SUB_ITEMS_BAR
@@ -805,6 +814,28 @@ def load_random_message(my_username: str) -> Optional[str]:
         except Exception as e:
             logger.error(f"Error: {e}.")
 
+def load_ai_comment(post_description: str) -> Optional[str]:
+    try:
+        response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+                {"role": "user", "content": """
+                You will write a comment for a post on Instagram.
+                Keep it under 70 characters.
+                Keep it casual with maximum of 2 emojis at the end.
+                Don't add hashtags.
+                Keep in mind you are not the author of the post.
+                Now write a comment for a post with the following description:
+                "{post_description}"
+                """.format(post_description=post_description)}
+            ]
+        )
+        comment = response['choices'][0]['message']['content']
+        logger.error(f"AI Comment: {comment}.")
+        return comment
+    except Exception as e:
+        logger.error(f"Error: {e}.")
+    return None
 
 def load_random_comment(my_username: str, media_type: MediaType) -> Optional[str]:
     def nonblank_lines(f):

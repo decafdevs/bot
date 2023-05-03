@@ -87,6 +87,9 @@ class MediaType(Enum):
     CAROUSEL = auto()
     UNKNOWN = auto()
 
+    def __str__(self):
+        return self.value
+
 
 class Owner(Enum):
     OPEN = auto()
@@ -1179,6 +1182,36 @@ class OpenedPostView:
             return False, None
 
         return like_btn_view.get_selected(), like_btn_view
+    
+    def get_post_description(self) -> Optional[str]:
+        """
+        Get post description
+        :return: post description
+        :rtype: str
+        """
+        try:
+            post_media_view = self.device.find(
+                resourceIdMatches=ResourceID.MEDIA_CONTAINER)
+            if post_media_view.exists(Timeout.MEDIUM):
+                description_view = post_media_view.down(
+                    resourceIdMatches=ResourceID.ROW_FEED_COMMENT_TEXTVIEW_LAYOUT
+                )
+                if description_view.exists():
+                    post_description = description_view.get_text()
+                    if post_description is not None and post_description.__contains__("more"):
+                        description_view.click()
+                    post_description = description_view.get_text()
+                    if post_description is None:
+                        return None
+
+                    # Remove username from description
+                    index_of_first_space = post_description.find(" ")
+                    post_description = post_description[index_of_first_space:]
+                    return post_description
+            return None
+        except Exception as e:
+            logger.error(f"Error while getting post description: {str(e)}")
+            return None
 
     def like_post(self) -> bool:
         """

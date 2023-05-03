@@ -48,6 +48,8 @@ FIELD_MIN_POSTS = "min_posts"
 FIELD_MIN_LIKERS = "min_likers"
 FIELD_MAX_LIKERS = "max_likers"
 FIELD_MUTUAL_FRIENDS = "mutual_friends"
+FIELD_AI_COMMENT = "ai_comment"
+FIELD_OPENAI_TOKEN = "openai_token"
 
 IGNORE_CHARSETS = ["MATHEMATICAL"]
 
@@ -563,6 +565,22 @@ class Filter:
         return field_pm_to_private_or_empty is not None and bool(
             field_pm_to_private_or_empty
         )
+    
+    def can_make_ai_comment(self) -> Tuple[bool, str]:
+        if self.conditions is None:
+            return False
+
+        field_ai_comment = self.conditions.get(FIELD_AI_COMMENT)
+        return field_ai_comment is not None and bool(
+            field_ai_comment
+        )
+
+    def get_open_ai_token(self) -> str:
+        if self.conditions is None:
+            return ""
+
+        field_openai_token = self.conditions.get(FIELD_OPENAI_TOKEN)
+        return field_openai_token
 
     def can_comment(self, current_mode) -> Tuple[bool, bool, bool, bool]:
         if self.conditions is not None:

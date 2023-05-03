@@ -393,4 +393,16 @@ class CoreArguments(Plugin):
                 "help": "instead of typing you can paste the text as in old versions",
                 "action": "store_true",
             },
+            {
+                "arg": "--can-ai-comment",
+                "help": "allow the script to use ai to comment",
+                "action": "store_true",
+            },
+            {
+                "arg": "--openai-api-key",
+                "help": "openai api key",
+                "nargs": None,
+                "metavar": "API_KEY",
+                "default": None,
+            },
         ]
