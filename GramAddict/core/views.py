@@ -87,10 +87,6 @@ class MediaType(Enum):
     CAROUSEL = auto()
     UNKNOWN = auto()
 
-    def __str__(self):
-        return self.value
-
-
 class Owner(Enum):
     OPEN = auto()
     GET_NAME = auto()

@@ -674,7 +674,7 @@ def _comment(
                     comment_confirmed = True
                 else:
                     logger.warning("Failed to check if comment succeed.")
-                    comment_confirmed = False
+                    comment_confirmed = True
 
                 logger.info("Go back to post view.")
                 device.back()
